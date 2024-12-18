@@ -24,6 +24,7 @@ def process_batch(packet_buffer):
         print(pr)
         if pr == 1:
             logging.info("Anomaly detected")
+            
     except Exception as e:
         logging.error(f"An error occurred: {e}")
         pass
