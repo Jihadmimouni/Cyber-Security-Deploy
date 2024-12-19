@@ -1,3 +1,4 @@
+import time
 from sklearn.preprocessing import StandardScaler
 import flux as fl
 import ipaddress
@@ -10,7 +11,15 @@ import logging
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+from scapy.all import wrpcap
 
+global sentmail 
+sentmail = False
 interface = r"\Device\NPF_{581C6813-F330-4245-AC76-465A5C73B185}"
 
 # Configure logging
@@ -31,9 +40,14 @@ def process_batch(packet_buffer):
             print("Anomaly detected in the batch!")
             logging.warning("Anomaly detected in the batch!")
             logging.warning("Sending alert to administrator...")
+            # Get the current time in a readable format (e.g., YYYY-MM-DD_HH-MM-SS)
+            current_time = time.strftime("%Y-%m-%d_%H-%M-%S")
+
+            # Save the packets to a pcap file with the current time as the filename
+            wrpcap(f"{current_time}.pcap", packet_buffer)
             # Code to send alert to
             #TODO: Implement alerting mechanism
-            alert()
+            alert(f"{current_time}.pcap")
             
 
 
@@ -88,16 +102,26 @@ def packet_callback(packet):
         logging.error(f"Error in packet callback: {e}")
         pass
 
-def alert():
+def alert(f):
+    global sentmail
+    if sentmail:
+        return
+    sentmail = True
     # Code to send alert to administrator via email 
     # Email credentials
-    sender_email = "your_email@gmail.com"  # Replace with your email
-    receiver_email = "nijjgrdqfzzewqlhkv@ytnhy.com"  # Replace with the recipient's email
+    sender_email = ""  # Replace with your email
+    receiver_email = ""  # Replace with the recipient's email
     password = ""  # Replace with your email password
-
     # Create the email content
-    subject = "Test Email from Python"
-    body = "This is a test email sent from Python."
+    subject = "Intrusion Alert: Suspicious Activity Detected"
+    body = """
+    Dear Admin,
+
+    This is an automated alert regarding suspicious network activity detected on the system. An intrusion attempt has been identified, and the following packet capture file is attached for your review. Please investigate and take necessary action.
+
+    Best regards,
+    Your Security System
+    """
 
     # Create a MIME multipart message
     message = MIMEMultipart()
@@ -108,6 +132,18 @@ def alert():
     # Attach the email body
     message.attach(MIMEText(body, "plain"))
 
+    # Attach the packet capture file (e.g., 'intrusion_packets.pcap')
+    filename = f  # Replace with the actual file name
+    attachment = open(filename, "rb")
+
+    part = MIMEBase("application", "octet-stream")
+    part.set_payload(attachment.read())
+    encoders.encode_base64(part)
+    part.add_header("Content-Disposition", f"attachment; filename={filename}")
+
+    # Attach the file to the email
+    message.attach(part)
+
     # Sending the email
     try:
         # Connect to the SMTP server
@@ -115,10 +151,9 @@ def alert():
             server.starttls()  # Upgrade the connection to a secure encrypted SSL/TLS connection
             server.login(sender_email, password)  # Log in to the email account
             server.sendmail(sender_email, receiver_email, message.as_string())  # Send the email
-            logging.info(f"Email sent: {subject}")
+        print("Email sent successfully.")
     except Exception as e:
-        logging.error(f"Failed to send email: {e}")
-
+        print(f"Failed to send email: {e}")
 
 # Sniff packets
 logging.info(f"Sniffing all packets... (Processing in batches of {BATCH_SIZE})")
