@@ -7,7 +7,7 @@ from sklearn.preprocessing import StandardScaler
 
 
 global source_ip 
-source_ip= ipaddress.ip_network('192.168.1.0/24')
+source_ip= ipaddress.ip_network('192.168.1.15/32')
 global destination_ip
 destination_ip= ipaddress.ip_network('0.0.0.0/0')
 global batchsize 
@@ -1244,7 +1244,7 @@ def process_packet_batch(packet_batch):
     l[79] = int(l[79]) 
     l[80] = int(l[80]) 
     l[81] = int(l[81]) 
-    return scaler.fit_transform([l])
+    return l
 
 from sklearn.preprocessing import StandardScaler
 import ipaddress
