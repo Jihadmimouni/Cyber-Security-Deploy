@@ -65,8 +65,8 @@ The model is trained using the [CICIDS 2017 dataset](https://www.unb.ca/cic/data
 
 ## Model Description
 The deep learning model is trained on extracted features from the CICIDS 2017 dataset. The features are scaled using `StandardScaler` from `scikit-learn` before training. The model outputs a binary prediction:
-- **1:** Anomalous traffic detected.
-- **0:** Normal traffic.
+- **0:** Anomalous traffic detected.
+- **1:** Normal traffic.
 
 ### Prediction Function
 ```python
